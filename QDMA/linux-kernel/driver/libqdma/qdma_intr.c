@@ -652,6 +652,15 @@ int intr_setup(struct xlnx_dma_dev *xdev)
 	 */
 	i = 0; /* This is mandatory, do not delete */
 
+	/* data interrupt */
+	xdev->dvec_start_idx = i;
+	for (; i < xdev->conf.data_msix_qvec_max; i++) {
+		rv = intr_vector_setup(xdev, i, INTR_TYPE_DATA,
+					data_intr_handler);
+		if (rv)
+			goto cleanup_irq;
+	}
+
 #ifndef MBOX_INTERRUPT_DISABLE
 	if ((xdev->version_info.device_type == QDMA_DEVICE_SOFT) &&
 	(xdev->version_info.vivado_release >= QDMA_VIVADO_2019_1)) {
@@ -687,15 +696,6 @@ int intr_setup(struct xlnx_dma_dev *xdev)
 		i++;
 	}
 #endif
-
-	/* data interrupt */
-	xdev->dvec_start_idx = i;
-	for (; i < xdev->num_vecs; i++) {
-		rv = intr_vector_setup(xdev, i, INTR_TYPE_DATA,
-					data_intr_handler);
-		if (rv)
-			goto cleanup_irq;
-	}
 
 	xdev->flags |= XDEV_FLAG_IRQ;
 	return rv;
